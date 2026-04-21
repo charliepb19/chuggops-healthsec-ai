@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+">
+  <!-- Background grid decoration -->
+  <div style="
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+  "></div>
+
+  <!-- Glow blob -->
+  <div style="
+    position: absolute; top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+    pointer-events: none;
+  "></div>
+
+  <div style="position: relative;">
+    <div style="
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--green);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    ">// SYSTEM INITIALISED — ALL MODULES OPERATIONAL</div>
+
+    <h1 style="
+      font-family: var(--font-display);
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    ">
+      ChuggOps<br>
+      <span style="color: var(--green);">HealthSec AI</span>
+    </h1>
+
+    <p style="
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin-bottom: 32px;
+      line-height: 1.7;
+    ">
+      Continuous threat monitoring for hospital information systems.
+      Detect anomalous access patterns, investigate incidents, and
+      maintain HIPAA compliance in real time.
+    </p>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <a href="/dashboard" style="
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--green); color: #080b0f;
+        font-family: var(--font-display); font-size: 14px;
+        font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+        padding: 12px 24px; border-radius: var(--radius);
+        transition: opacity var(--transition);
+      " onmouseover="this.style.opacity='.85'"
+         onmouseout="this.style.opacity='1'">
+        ◈ Open Dashboard
+      </a>
+      <a href="/alerts" style="
+        display: inline-flex; align-items: center; gap: 8px;
+        background: transparent; color: var(--text-primary);
+        font-family: var(--font-display); font-size: 14px;
+        font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+        padding: 12px 24px; border-radius: var(--radius);
+        border: 1px solid var(--border-bright);
+        transition: border-color var(--transition);
+      " onmouseover="this.style.borderColor='var(--text-secondary)'"
+         onmouseout="this.style.borderColor='var(--border-bright)'">
+        ◬ View Alerts
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Feature tiles ─────────────────────────────────────────────────────── -->
+<div style="
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+">
+  {% for tile in [
+    {"icon": "◉", "name": "Patient Tracking",  "color": "green", "desc": "Monitor who accesses which patient records and when."},
+    {"icon": "◈", "name": "Access Logging",    "color": "blue",  "desc": "Every view, edit, download, and delete is recorded with a full audit trail."},
+    {"icon": "◬", "name": "Threat Detection",  "color": "amber", "desc": "Rule-based engine flags brute force, off-hours access, and bulk downloads."},
+    {"icon": "▣", "name": "AI Analysis",       "color": "red",   "desc": "Plain-English explanations of security events for non-technical staff."}
+  ] %}
+  <div style="
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color var(--transition);
+  "
+    onmouseover="this.style.borderColor='var(--border-bright)'"
+    onmouseout="this.style.borderColor='var(--border)'">
+
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--{{ tile.color }});
+    "></div>
+
+    <div style="font-size: 24px; margin-bottom: 12px; color: var(--{{ tile.color }});">
+      {{ tile.icon }}
+    </div>
+
+    <div style="
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-primary); margin-bottom: 8px;
+    ">{{ tile.name }}</div>
+
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+      {{ tile.desc }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── System status strip ───────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex; gap: 32px; flex-wrap: wrap;
+">
+  {% for item in [
+    {"label": "DB Status",        "val": "CONNECTED",    "color": "green"},
+    {"label": "Detection Engine", "val": "ACTIVE",        "color": "green"},
+    {"label": "AI Engine",        "val": "STANDBY",       "color": "amber"},
+    {"label": "Audit Log",        "val": "RECORDING",     "color": "green"},
+    {"label": "TLS",              "val": "1.3 / AES-256", "color": "blue"},
+    {"label": "HIPAA Mode",       "val": "ENABLED",       "color": "green"}
+  ] %}
+  <div>
+    <div style="
+      font-family: var(--font-mono); font-size: 8px;
+      color: var(--text-dim); letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 2px;
+    ">{{ item.label }}</div>
+    <div style="
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--{{ item.color }}); letter-spacing: 0.1em;
+    ">{{ item.val }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

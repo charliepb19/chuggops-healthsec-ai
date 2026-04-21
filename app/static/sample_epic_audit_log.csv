@@ -1,0 +1,31 @@
+Access Date,User Login,User Name,Patient MRN,Patient Name,Date of Birth,Action,Department,IP Address,Reason
+2026-04-14 07:12:44,jsmith,Dr. James Smith,MRN-000101,Eleanor Voss,1962-05-14,Chart Access,Cardiology,192.168.1.45,Clinical Care
+2026-04-14 07:15:02,jsmith,Dr. James Smith,MRN-000102,Robert Chen,1978-11-03,Chart Access,Cardiology,192.168.1.45,Clinical Care
+2026-04-14 07:43:19,anurse,Amanda Nurse,MRN-000103,Patricia Liu,1945-08-22,Chart Access,Emergency,192.168.2.11,Triage Assessment
+2026-04-14 08:01:55,anurse,Amanda Nurse,MRN-000103,Patricia Liu,1945-08-22,Chart Update,Emergency,192.168.2.11,Vitals Entry
+2026-04-14 08:22:30,bpatel,Dr. Bhavesh Patel,MRN-000104,Marcus Webb,1990-01-30,Chart Access,Oncology,192.168.3.88,Routine Review
+2026-04-14 08:45:10,bpatel,Dr. Bhavesh Patel,MRN-000105,Sandra Kim,1955-07-19,Result Review,Oncology,192.168.3.88,Lab Results
+2026-04-14 09:03:27,jsmith,Dr. James Smith,MRN-000106,Thomas Grant,1971-12-01,Chart Access,Cardiology,192.168.1.45,Pre-Op Review
+2026-04-14 09:11:44,jsmith,Dr. James Smith,MRN-000106,Thomas Grant,1971-12-01,Order Entry,Cardiology,192.168.1.45,Medication Order
+2026-04-14 09:30:15,twright,Technician Wright,MRN-000107,Fiona Hayes,1983-04-09,Result Entry,Radiology,192.168.4.22,Imaging Upload
+2026-04-14 10:05:02,anurse,Amanda Nurse,MRN-000108,George Moss,1937-09-16,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:07:44,anurse,Amanda Nurse,MRN-000109,Helen Carter,1969-06-28,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:08:59,anurse,Amanda Nurse,MRN-000110,Ivan Petrov,1958-03-11,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:10:22,anurse,Amanda Nurse,MRN-000111,Joyce Lam,1974-10-05,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:12:01,anurse,Amanda Nurse,MRN-000112,Kevin O'Brien,1981-02-17,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:13:55,anurse,Amanda Nurse,MRN-000113,Laura Diaz,1992-08-30,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:15:12,anurse,Amanda Nurse,MRN-000114,Michael Torres,1963-11-22,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:16:44,anurse,Amanda Nurse,MRN-000115,Nancy Wu,1987-05-07,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:18:03,anurse,Amanda Nurse,MRN-000116,Oscar Fernandez,1950-01-14,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:19:28,anurse,Amanda Nurse,MRN-000117,Paula Singh,1978-07-25,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 10:20:50,anurse,Amanda Nurse,MRN-000118,Quinn Adams,1995-03-03,Chart Access,ICU,192.168.2.11,Shift Handover
+2026-04-14 11:45:33,lreyes,Dr. Luis Reyes,MRN-000119,Rachel Brooks,1966-09-18,Chart Access,Surgery,192.168.5.60,Pre-Op
+2026-04-14 11:50:14,lreyes,Dr. Luis Reyes,MRN-000119,Rachel Brooks,1966-09-18,Order Entry,Surgery,192.168.5.60,Surgery Prep Orders
+2026-04-14 13:22:09,twright,Technician Wright,MRN-000120,Samuel Pierce,1943-12-29,Chart Delete,Radiology,192.168.4.22,Duplicate Record Removal
+2026-04-14 13:23:40,twright,Technician Wright,MRN-000101,Eleanor Voss,1962-05-14,Chart Delete,Radiology,192.168.4.22,Duplicate Record Removal
+2026-04-14 13:24:55,twright,Technician Wright,MRN-000103,Patricia Liu,1945-08-22,Chart Delete,Radiology,192.168.4.22,Duplicate Record Removal
+2026-04-14 22:14:07,bpatel,Dr. Bhavesh Patel,MRN-000104,Marcus Webb,1990-01-30,Chart Access,Oncology,103.21.55.88,Remote Access
+2026-04-14 22:47:31,bpatel,Dr. Bhavesh Patel,MRN-000105,Sandra Kim,1955-07-19,Chart Access,Oncology,103.21.55.88,Remote Access
+2026-04-15 02:05:18,unknown_user,Unknown,MRN-000101,Eleanor Voss,1962-05-14,Chart Access,Unknown,185.220.101.5,
+2026-04-15 02:06:44,unknown_user,Unknown,MRN-000102,Robert Chen,1978-11-03,Chart Access,Unknown,185.220.101.5,
+2026-04-15 02:08:02,unknown_user,Unknown,MRN-000119,Rachel Brooks,1966-09-18,Export,Unknown,185.220.101.5,

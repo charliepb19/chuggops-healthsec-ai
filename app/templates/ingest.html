@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">▲ Import Audit Log Data</div>
+  <div class="section-count">EPIC EHR FORMAT SUPPORTED</div>
+</div>
+
+<!-- ── Result banner ─────────────────────────────────────────────────────── -->
+{% if result %}
+<div style="
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; margin-bottom:24px;
+  {% if result.imported > 0 %}border-left:3px solid var(--green);
+  {% else %}border-left:3px solid var(--amber);{% endif %}
+">
+  <div style="
+    background:var(--bg-surface); padding:12px 20px;
+    border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:9px;
+    letter-spacing:0.2em; color:var(--text-dim);
+  ">IMPORT COMPLETE</div>
+  <div style="padding:20px; display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+    <div style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:36px;font-weight:700;color:var(--green);">
+        {{ result.imported }}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.15em;">ROWS IMPORTED</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:36px;font-weight:700;color:var(--blue);">
+        {{ result.patients_created }}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.15em;">NEW PATIENTS</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:36px;font-weight:700;color:var(--text-secondary);">
+        {{ result.skipped }}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.15em;">SKIPPED / DUPES</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:var(--font-display);font-size:36px;font-weight:700;
+        {% if result.errors %}color:var(--red){% else %}color:var(--green){% endif %};">
+        {{ result.errors | length }}
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.15em;">ERRORS</div>
+    </div>
+  </div>
+  {% if result.errors %}
+  <div style="padding:0 20px 20px;">
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--red);letter-spacing:0.15em;margin-bottom:8px;">ROW ERRORS</div>
+    {% for err in result.errors %}
+    <div style="
+      font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);
+      background:var(--red-muted); border:1px solid var(--red-dim);
+      border-radius:var(--radius); padding:6px 12px; margin-bottom:4px;
+    ">{{ err }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+
+  <!-- ── Upload form ───────────────────────────────────────────────────── -->
+  <div style="
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden;
+    border-left:3px solid var(--green);
+  ">
+    <div style="
+      background:var(--bg-surface); padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      font-family:var(--font-display); font-size:13px; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+    ">▲ Upload CSV File</div>
+
+    <form method="POST" action="/ingest" enctype="multipart/form-data">
+      <div style="padding:24px; display:grid; gap:20px;">
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:10px;">
+            SELECT AUDIT LOG FILE
+          </div>
+          <label style="
+            display:block; padding:32px 20px; text-align:center;
+            background:var(--bg-surface); border:2px dashed var(--border);
+            border-radius:var(--radius); cursor:pointer;
+            transition:all var(--transition);
+          "
+          id="drop-zone"
+          onmouseover="this.style.borderColor='var(--green-dim)';this.style.background='var(--green-muted)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg-surface)'">
+            <input type="file" name="file" accept=".csv,.txt" required
+              style="display:none;" id="file-input"
+              onchange="document.getElementById('file-label').textContent = this.files[0]?.name || 'No file chosen'"/>
+            <div style="font-size:28px;margin-bottom:8px;color:var(--text-dim);">▲</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:0.1em;" id="file-label">
+              CLICK TO SELECT FILE
+            </div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:4px;">
+              .csv or .txt accepted
+            </div>
+          </label>
+        </div>
+
+        <button type="submit" style="
+          width:100%; padding:12px;
+          background:var(--green-muted); color:var(--green);
+          border:1px solid var(--green-dim); border-radius:var(--radius);
+          font-family:var(--font-display); font-size:14px; font-weight:700;
+          cursor:pointer; letter-spacing:0.06em;
+          transition:all var(--transition);
+        "
+        onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+        onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+          ▲ Import Data
+        </button>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Format guide ──────────────────────────────────────────────────── -->
+  <div style="display:grid; gap:16px;">
+
+    <div style="
+      background:var(--bg-panel); border:1px solid var(--border);
+      border-radius:var(--radius); overflow:hidden;
+    ">
+      <div style="
+        background:var(--bg-surface); padding:14px 20px;
+        border-bottom:1px solid var(--border);
+        font-family:var(--font-display); font-size:13px; font-weight:700;
+        letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+      ">◈ Expected CSV Format</div>
+      <div style="padding:20px; display:grid; gap:10px;">
+        {% for field, required, note in [
+          ('Access Date',   true,  'YYYY-MM-DD HH:MM:SS or M/D/YYYY'),
+          ('User Login',    true,  'Staff login ID, e.g. jsmith'),
+          ('Patient MRN',   true,  'Medical record number'),
+          ('Patient Name',  false, 'Auto-creates patient if not found'),
+          ('Date of Birth', false, 'YYYY-MM-DD'),
+          ('Action',        false, 'Chart Access, Order Entry, Delete…'),
+          ('IP Address',    false, 'Workstation or remote IP'),
+        ] %}
+        <div style="
+          display:flex; justify-content:space-between; align-items:center;
+          padding:8px 12px;
+          background:var(--bg-surface); border-radius:4px;
+          border:1px solid var(--border);
+        ">
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-primary);">
+            {{ field }}
+            {% if required %}
+            <span style="color:var(--red);margin-left:4px;">*</span>
+            {% endif %}
+          </span>
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);">{{ note }}</span>
+        </div>
+        {% endfor %}
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em;margin-top:4px;">
+          * Required columns
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample file download -->
+    <div style="
+      background:var(--bg-panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:16px 20px;
+      display:flex; align-items:center; justify-content:space-between;
+    ">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">SAMPLE FILE</div>
+        <div style="font-size:13px;color:var(--text-secondary);">
+          Download a pre-filled Epic-format CSV with 30 realistic rows to test the importer.
+        </div>
+      </div>
+      <a href="/static/sample_epic_audit_log.csv" download style="
+        font-family:var(--font-mono); font-size:10px; letter-spacing:0.15em;
+        color:var(--blue); border:1px solid #93c5fd;
+        background:var(--blue-muted); border-radius:var(--radius);
+        padding:10px 16px; white-space:nowrap; flex-shrink:0; margin-left:16px;
+        transition:all var(--transition);
+      "
+      onmouseover="this.style.background='var(--blue)';this.style.color='#07061a'"
+      onmouseout="this.style.background='var(--blue-muted)';this.style.color='var(--blue)'">
+        ↓ DOWNLOAD
+      </a>
+    </div>
+
+    <!-- What happens on import -->
+    <div style="
+      background:var(--blue-muted); border:1px solid #93c5fd;
+      border-radius:var(--radius); padding:14px 20px;
+      display:flex; align-items:flex-start; gap:12px;
+    ">
+      <span style="color:var(--blue);font-size:16px;flex-shrink:0;margin-top:1px;">ⓘ</span>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+        Duplicate rows are automatically skipped. New patients found in the CSV are
+        created automatically using their MRN. After import, run detection on the
+        dashboard to generate alerts from the new data.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Make the whole drop-zone label trigger the file input
+  document.getElementById('drop-zone').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+  });
+</script>
+
+{% endblock %}

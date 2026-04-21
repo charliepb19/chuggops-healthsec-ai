@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="section-header">
+  <div class="section-title">◎ App Audit Log</div>
+  <div class="section-count">HIPAA ACCESS TRAIL</div>
+</div>
+
+<!-- ── Filter bar ─────────────────────────────────────────────────────────── -->
+<form method="GET" action="/audit-log" style="
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 20px; margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+">
+  <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;">
+    FILTER BY USER
+  </div>
+  <select name="user_filter" style="
+    background:var(--bg-surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:7px 12px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-primary);
+    outline:none; cursor:pointer;
+  ">
+    <option value="">All users</option>
+    {% for u in users %}
+    <option value="{{ u }}" {% if u == user_filter %}selected{% endif %}>{{ u }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" style="
+    padding:7px 20px; background:var(--green-muted); color:var(--green);
+    border:1px solid var(--green-dim); border-radius:var(--radius);
+    font-family:var(--font-mono); font-size:9px; letter-spacing:0.12em;
+    cursor:pointer; transition:all var(--transition);
+  "
+  onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+  onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+    APPLY
+  </button>
+  {% if user_filter %}
+  <a href="/audit-log" style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em;">
+    CLEAR ×
+  </a>
+  {% endif %}
+</form>
+
+<!-- ── Log table ─────────────────────────────────────────────────────────── -->
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-title">◎ Access Records</div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em;">
+      {{ pagination.total }} TOTAL ENTRIES
+    </div>
+  </div>
+
+  {% if logs %}
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>User</th>
+        <th>Role</th>
+        <th>Method</th>
+        <th>Path</th>
+        <th>IP Address</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="mono text-dim">
+          {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '—' }}
+        </td>
+        <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary);">
+          {{ log.username }}
+        </td>
+        <td>
+          {% if log.role == 'ADMIN' %}
+            <span class="badge badge-closed">ADMIN</span>
+          {% elif log.role == 'ANALYST' %}
+            <span class="badge badge-low">ANALYST</span>
+          {% else %}
+            <span class="badge badge-default">{{ log.role or '—' }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if log.method == 'POST' %}
+            <span class="badge badge-medium">POST</span>
+          {% else %}
+            <span class="badge badge-default">GET</span>
+          {% endif %}
+        </td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);">
+          {{ log.path }}
+        </td>
+        <td class="mono text-dim">{{ log.ip_address or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set base_query = "user_filter=" ~ user_filter %}
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">
+    NO AUDIT LOG ENTRIES YET<br>
+    <span style="font-size:9px;margin-top:8px;display:block;">
+      ENTRIES APPEAR AS ANALYSTS USE THE PLATFORM
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── HIPAA notice ───────────────────────────────────────────────────────── -->
+<div style="
+  background:var(--blue-muted); border:1px solid #93c5fd;
+  border-radius:var(--radius); padding:14px 20px;
+  display:flex; align-items:flex-start; gap:12px;
+">
+  <span style="color:var(--blue);font-size:16px;flex-shrink:0;margin-top:1px;">ⓘ</span>
+  <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+    This log records every action taken inside ChuggOps HealthSec AI by authenticated users.
+    It is separate from the EHR access log and fulfils the HIPAA requirement to audit access
+    to your security tooling (45 CFR §164.312(b)).
+  </div>
+</div>
+
+{% endblock %}

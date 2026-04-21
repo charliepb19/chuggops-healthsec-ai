@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">◉ Patient Registry</div>
+  <div class="section-count" style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">
+    {{ patients | length }} RECORD{% if patients | length != 1 %}S{% endif %} FOUND
+  </div>
+</div>
+
+<!-- ── Stats strip ───────────────────────────────────────────────────────── -->
+<div style="
+  display: flex; gap: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+">
+  {% for label, val, color in [
+    ('Total Patients',    patients | length,  'green'),
+    ('Active Records',    patients | length,  'blue'),
+    ('Flagged Records',   0,                  'red'),
+  ] %}
+  <div style="
+    flex: 1; padding: 16px 24px;
+    {% if not loop.last %}border-right: 1px solid var(--border);{% endif %}
+  ">
+    <div style="
+      font-family: var(--font-mono); font-size: 8px;
+      color: var(--text-dim); letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 4px;
+    ">{{ label }}</div>
+    <div style="
+      font-family: var(--font-display); font-size: 28px;
+      font-weight: 700; color: var(--{{ color }});
+    ">{{ val }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Search bar ────────────────────────────────────────────────────────── -->
+<form method="GET" action="/patients" style="
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 20px; margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search by name or MRN…" style="
+    flex:1; background:var(--bg-surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:8px 14px;
+    font-family:var(--font-mono); font-size:12px; color:var(--text-primary);
+    outline:none; transition:border-color var(--transition);
+  "
+  onfocus="this.style.borderColor='var(--green-dim)'"
+  onblur="this.style.borderColor='var(--border)'" />
+  <button type="submit" style="
+    padding:8px 20px; background:var(--green-muted); color:var(--green);
+    border:1px solid var(--green-dim); border-radius:var(--radius);
+    font-family:var(--font-mono); font-size:9px; letter-spacing:0.12em;
+    cursor:pointer; transition:all var(--transition);
+  "
+  onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+  onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+    SEARCH
+  </button>
+  {% if q %}
+  <a href="/patients" style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);">CLEAR ×</a>
+  {% endif %}
+</form>
+
+<!-- ── Patient table ─────────────────────────────────────────────────────── -->
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-title">◉ Patient Records</div>
+    <div style="font-family: var(--font-mono); font-size: 9px; color: var(--green); letter-spacing: 0.1em;">
+      AUDIT LOGGING ACTIVE
+    </div>
+  </div>
+
+  {% if patients %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>ID</th>
+        <th>Full Name</th>
+        <th>Date of Birth</th>
+        <th>MRN</th>
+        <th>Record Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr style="cursor:pointer;" onclick="location.href='/patients/{{ p.id }}'">
+        <td class="mono text-dim">{{ loop.index }}</td>
+        <td class="mono" style="color: var(--text-dim);">#{{ p.id }}</td>
+        <td style="
+          font-family: var(--font-display);
+          font-size: 15px; font-weight: 600;
+          letter-spacing: 0.04em; color: var(--text-primary);
+        ">{{ p.name }}</td>
+        <td class="mono">{{ p.dob }}</td>
+        <td>
+          <span style="
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--green); background: var(--green-muted);
+            border: 1px solid var(--green-dim);
+            padding: 2px 8px; border-radius: 2px;
+            letter-spacing: 0.1em;
+          ">{{ p.medical_record_number }}</span>
+        </td>
+        <td class="mono text-dim">
+          {{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '—' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set base_query = "q=" ~ q %}
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">
+    {% if q %}
+      NO PATIENTS MATCHING "{{ q }}"
+    {% else %}
+      NO PATIENT RECORDS FOUND
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── HIPAA notice ───────────────────────────────────────────────────────── -->
+<div style="
+  background: var(--blue-muted);
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex; align-items: flex-start; gap: 12px;
+">
+  <span style="color: var(--blue); font-size: 16px; flex-shrink: 0; margin-top: 1px;">ⓘ</span>
+  <div>
+    <div style="
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--blue); letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 4px;
+    ">HIPAA Notice</div>
+    <div style="
+      font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    ">
+      All access to patient records is logged with user identity, timestamp, action type, and IP address.
+      Unauthorised access or disclosure of patient health information is a federal violation under HIPAA (45 CFR §164).
+    </div>
+  </div>
+</div>
+
+{% endblock %}

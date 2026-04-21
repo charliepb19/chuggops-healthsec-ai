@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Detection toolbar ─────────────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+
+  {% if detected is defined %}
+    {% if detected > 0 %}
+      <div style="
+        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+        color: var(--green); background: var(--green-muted);
+        border: 1px solid var(--green-dim); border-radius: var(--radius);
+        padding: 8px 16px;
+      ">◈ DETECTION COMPLETE — {{ detected }} NEW ALERT{{ 's' if detected != 1 }} SAVED</div>
+    {% else %}
+      <div style="
+        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+        color: var(--text-dim); background: var(--bg-panel);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 8px 16px;
+      ">◈ DETECTION COMPLETE — NO NEW ALERTS</div>
+    {% endif %}
+  {% else %}
+    <div></div>
+  {% endif %}
+
+  <form method="POST" action="/run-detection">
+    <button type="submit" style="
+      font-family: var(--font-display); font-size: 12px;
+      font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+      background: var(--green-muted); color: var(--green);
+      border: 1px solid var(--green-dim); border-radius: var(--radius);
+      padding: 8px 20px; cursor: pointer;
+      transition: all var(--transition);
+    "
+    onmouseover="this.style.background='var(--green)';this.style.color='#080b0f'"
+    onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+      ▶ Run Detection
+    </button>
+  </form>
+</div>
+
+<!-- ── Summary cards ─────────────────────────────────────────────────────── -->
+<div class="cards-grid">
+
+  <div class="card card-green">
+    <div class="card-label">Total Patients</div>
+    <div class="card-value">{{ patient_count }}</div>
+    <div class="card-sub">REGISTERED RECORDS</div>
+  </div>
+
+  <div class="card card-blue">
+    <div class="card-label">Access Events</div>
+    <div class="card-value">{{ log_count }}</div>
+    <div class="card-sub">ALL TIME LOG ENTRIES</div>
+  </div>
+
+  <div class="card card-amber">
+    <div class="card-label">Security Alerts</div>
+    <div class="card-value" id="live-alerts">{{ alert_count }}</div>
+    <div class="card-sub">TOTAL ALERTS RAISED</div>
+  </div>
+
+  <div class="card card-red">
+    <div class="card-label">Incidents</div>
+    <div class="card-value" id="live-incidents">{{ incident_count }}</div>
+    <div class="card-sub">INCIDENT REPORTS</div>
+  </div>
+
+</div>
+
+<!-- ── Two-column lower section ──────────────────────────────────────────── -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+  <!-- Recent access logs -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">◉ Recent Access Events</div>
+      <a href="/patients" style="
+        font-family: var(--font-mono); font-size: 9px;
+        color: var(--text-dim); letter-spacing: 0.15em;
+        text-transform: uppercase;
+        transition: color var(--transition);
+      " onmouseover="this.style.color='var(--green)'"
+         onmouseout="this.style.color='var(--text-dim)'">
+        VIEW ALL →
+      </a>
+    </div>
+
+    {% if recent_logs %}
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Action</th>
+          <th>Patient ID</th>
+          <th>Timestamp</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr>
+          <td class="mono" style="color: var(--text-primary);">{{ log.user }}</td>
+          <td>
+            {% if log.action | upper == 'DELETE' %}
+              <span class="badge badge-delete">{{ log.action | upper }}</span>
+            {% elif log.action | upper == 'EDIT' %}
+              <span class="badge badge-edit">{{ log.action | upper }}</span>
+            {% elif log.action | upper == 'VIEW' %}
+              <span class="badge badge-view">{{ log.action | upper }}</span>
+            {% else %}
+              <span class="badge badge-default">{{ log.action | upper }}</span>
+            {% endif %}
+          </td>
+          <td class="mono">#{{ log.patient_id }}</td>
+          <td class="mono">{{ log.timestamp.strftime('%m-%d %H:%M') }}</td>
+          <td class="mono">
+            {% if log.ip_address and (log.ip_address.startswith('45.') or log.ip_address.startswith('185.') or log.ip_address.startswith('103.') or log.ip_address.startswith('91.')) %}
+              <span style="color: var(--red);">{{ log.ip_address }}</span>
+            {% else %}
+              {{ log.ip_address or '—' }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">NO ACCESS LOGS RECORDED YET</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent alerts -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">◬ Recent Alerts</div>
+      <a href="/alerts" style="
+        font-family: var(--font-mono); font-size: 9px;
+        color: var(--text-dim); letter-spacing: 0.15em;
+        text-transform: uppercase;
+        transition: color var(--transition);
+      " onmouseover="this.style.color='var(--green)'"
+         onmouseout="this.style.color='var(--text-dim)'">
+        VIEW ALL →
+      </a>
+    </div>
+
+    {% if recent_alerts %}
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Severity</th>
+          <th>Raised</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in recent_alerts %}
+        <tr>
+          <td style="
+            font-family: var(--font-mono); font-size: 11px;
+            max-width: 180px; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+          ">{{ alert.alert_type }}</td>
+          <td>
+            {% if alert.severity | upper == 'CRITICAL' %}
+              <span class="badge badge-critical">CRITICAL</span>
+            {% elif alert.severity | upper == 'HIGH' %}
+              <span class="badge badge-high">HIGH</span>
+            {% elif alert.severity | upper == 'MEDIUM' %}
+              <span class="badge badge-medium">MEDIUM</span>
+            {% else %}
+              <span class="badge badge-low">LOW</span>
+            {% endif %}
+          </td>
+          <td class="mono">{{ alert.created_at.strftime('%m-%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">NO ALERTS ON RECORD</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Threat level indicator ────────────────────────────────────────────── -->
+<div style="
+  margin-top: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+">
+  <div>
+    <div style="
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-dim); letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 4px;
+    ">Current Threat Level</div>
+
+    {% if alert_count > 5 %}
+      <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.1em; color: var(--red);">ELEVATED</div>
+    {% elif alert_count > 2 %}
+      <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.1em; color: var(--amber);">GUARDED</div>
+    {% else %}
+      <div style="font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: 0.1em; color: var(--green);">NORMAL</div>
+    {% endif %}
+  </div>
+
+  <!-- Threat bar -->
+  <div style="flex: 1; max-width: 400px; margin: 0 32px;">
+    <div style="
+      height: 6px; background: var(--bg-surface);
+      border-radius: 3px; overflow: hidden;
+      border: 1px solid var(--border);
+    ">
+      {% set bar_pct = alert_count * 10 if alert_count * 10 < 100 else 100 %}
+      {% if alert_count > 5 %}
+        <div style="height: 100%; width: {{ bar_pct }}%; background: var(--red); border-radius: 3px; box-shadow: 0 0 8px var(--red);"></div>
+      {% elif alert_count > 2 %}
+        <div style="height: 100%; width: {{ bar_pct }}%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px var(--amber);"></div>
+      {% else %}
+        <div style="height: 100%; width: {{ bar_pct }}%; background: var(--green); border-radius: 3px; box-shadow: 0 0 8px var(--green);"></div>
+      {% endif %}
+    </div>
+    <div style="
+      display: flex; justify-content: space-between; margin-top: 4px;
+      font-family: var(--font-mono); font-size: 8px; color: var(--text-dim);
+      letter-spacing: 0.1em;
+    ">
+      <span>NORMAL</span><span>GUARDED</span><span>ELEVATED</span>
+    </div>
+  </div>
+
+  <a href="/alerts" style="
+    font-family: var(--font-display); font-size: 12px;
+    font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-secondary);
+    border: 1px solid var(--border); padding: 8px 16px;
+    border-radius: var(--radius);
+    transition: all var(--transition);
+  " onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'"
+     onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+    Investigate →
+  </a>
+</div>
+
+<!-- ── SSE live updates ───────────────────────────────────────────────────── -->
+<div id="sse-banner" style="
+  display: none;
+  position: fixed; bottom: 24px; right: 28px;
+  background: var(--red-muted); color: var(--red);
+  border: 1px solid var(--red-dim); border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+  padding: 10px 18px; z-index: 9998;
+  animation: fadein 300ms ease both;
+">● NEW ALERT DETECTED</div>
+
+<script>
+(function () {
+  const elAlerts    = document.getElementById('live-alerts');
+  const elIncidents = document.getElementById('live-incidents');
+  const banner      = document.getElementById('sse-banner');
+  if (!elAlerts || !window.EventSource) return;
+
+  let prevAlerts = parseInt(elAlerts.textContent, 10) || 0;
+  let bannerTimer = null;
+
+  const es = new EventSource('/events');
+
+  es.onmessage = function (e) {
+    try {
+      const d = JSON.parse(e.data);
+
+      if (d.alerts !== undefined) {
+        if (d.alerts > prevAlerts) {
+          // Flash the card
+          elAlerts.parentElement.style.transition = 'box-shadow 400ms ease';
+          elAlerts.parentElement.style.boxShadow  = '0 0 24px var(--red)';
+          setTimeout(() => { elAlerts.parentElement.style.boxShadow = ''; }, 1200);
+          // Show banner
+          banner.style.display = 'block';
+          clearTimeout(bannerTimer);
+          bannerTimer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
+        }
+        elAlerts.textContent = d.alerts;
+        prevAlerts = d.alerts;
+      }
+
+      if (d.incidents !== undefined) {
+        elIncidents.textContent = d.incidents;
+      }
+    } catch (_) {}
+  };
+
+  es.onerror = function () {
+    // Reconnection is automatic; suppress console noise
+    es.close();
+  };
+})();
+</script>
+
+{% endblock %}

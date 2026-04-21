@@ -1,0 +1,79 @@
+version: "3.9"
+
+# ── ChuggOps HealthSec AI — Production Stack ─────────────────────────────────
+# Services: PostgreSQL · App (FastAPI/uvicorn) · Nginx (reverse proxy + TLS)
+#
+# Quick start:
+#   cp .env.example .env      # fill in real values
+#   docker compose up -d
+#
+# First-time SSL (self-signed for testing):
+#   mkdir ssl
+#   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+#     -keyout ssl/key.pem -out ssl/cert.pem -subj "/CN=localhost"
+#
+# Production SSL (Let's Encrypt via Certbot — run once after DNS is set up):
+#   docker run --rm -v $(pwd)/ssl:/etc/letsencrypt certbot/certbot certonly \
+#     --standalone -d your.domain.com --email you@email.com --agree-tos
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       chuggops
+      POSTGRES_USER:     chuggops
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chuggops -d chuggops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Application ─────────────────────────────────────────────────────────────
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL:          postgresql://chuggops:${DB_PASSWORD}@db:5432/chuggops
+      SESSION_SECRET:        ${SESSION_SECRET}
+      CHUGGOPS_ADMIN_USER:   ${CHUGGOPS_ADMIN_USER}
+      CHUGGOPS_ADMIN_PASS:   ${CHUGGOPS_ADMIN_PASS}
+      OPENAI_API_KEY:        ${OPENAI_API_KEY:-}
+      SMTP_HOST:             ${SMTP_HOST:-}
+      SMTP_PORT:             ${SMTP_PORT:-587}
+      SMTP_USER:             ${SMTP_USER:-}
+      SMTP_PASS:             ${SMTP_PASS:-}
+      ALERT_EMAIL_TO:        ${ALERT_EMAIL_TO:-}
+      WORKERS:               ${WORKERS:-2}
+      ML_MODEL_PATH:         /app/models/isolation_forest.pkl
+    volumes:
+      - ml_models:/app/models   # persists ML model across container restarts
+    expose:
+      - "8000"
+
+  # ── Nginx ───────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+
+volumes:
+  postgres_data:   # patient data — back this up regularly
+  ml_models:       # trained Isolation Forest — regenerated automatically if lost
+  nginx_logs:

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">▣ Incident Reports</div>
+  <div class="section-count">
+    {{ incidents | length }} INCIDENT{% if incidents | length != 1 %}S{% endif %} ON RECORD
+  </div>
+</div>
+
+<!-- ── Status summary cards ──────────────────────────────────────────────── -->
+{% set open_count     = incidents | selectattr('status', 'equalto', 'OPEN')      | list | length %}
+{% set review_count   = incidents | selectattr('status', 'equalto', 'IN_REVIEW') | list | length %}
+{% set closed_count   = incidents | selectattr('status', 'equalto', 'CLOSED')    | list | length %}
+
+<div class="cards-grid" style="margin-bottom: 24px;">
+  <div class="card card-red">
+    <div class="card-label">Open</div>
+    <div class="card-value">{{ open_count }}</div>
+    <div class="card-sub">NEEDS ATTENTION</div>
+  </div>
+  <div class="card card-amber">
+    <div class="card-label">In Review</div>
+    <div class="card-value">{{ review_count }}</div>
+    <div class="card-sub">UNDER INVESTIGATION</div>
+  </div>
+  <div class="card card-green">
+    <div class="card-label">Closed</div>
+    <div class="card-value">{{ closed_count }}</div>
+    <div class="card-sub">RESOLVED</div>
+  </div>
+  <div class="card card-blue">
+    <div class="card-label">Total</div>
+    <div class="card-value">{{ incidents | length }}</div>
+    <div class="card-sub">ALL INCIDENTS</div>
+  </div>
+</div>
+
+<!-- ── Resolution progress bar ───────────────────────────────────────────── -->
+{% if incidents | length > 0 %}
+{% set pct_closed = ((closed_count / incidents | length) * 100) | round | int %}
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 24px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 20px;
+">
+  <div style="
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--text-dim); letter-spacing: 0.2em;
+    text-transform: uppercase; flex-shrink: 0;
+  ">Resolution Rate</div>
+  <div style="flex: 1;">
+    <div style="
+      height: 6px; background: var(--bg-surface);
+      border-radius: 3px; overflow: hidden;
+      border: 1px solid var(--border);
+    ">
+      <div style="
+        height: 100%; width: {{ pct_closed }}%;
+        background: var(--green);
+        border-radius: 3px;
+        box-shadow: 0 0 8px var(--green);
+      "></div>
+    </div>
+  </div>
+  <div style="
+    font-family: var(--font-display); font-size: 22px;
+    font-weight: 700; color: var(--green); flex-shrink: 0;
+  ">{{ pct_closed }}%</div>
+</div>
+{% endif %}
+
+<!-- ── Filter bar ────────────────────────────────────────────────────────── -->
+<form method="GET" action="/incidents" style="
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 20px; margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+">
+  <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;">STATUS</div>
+  {% for val, label, cls in [('','default','ALL'), ('OPEN','open','OPEN'), ('IN_REVIEW','review','IN REVIEW'), ('CLOSED','closed','CLOSED')] %}
+  <label style="cursor:pointer;">
+    <input type="radio" name="status" value="{{ val }}"
+      {% if status_filter == val %}checked{% endif %}
+      style="display:none;" onchange="this.form.submit()" />
+    <span class="badge badge-{{ cls }}" style="cursor:pointer;">{{ label }}</span>
+  </label>
+  {% endfor %}
+  {% if status_filter %}
+  <a href="/incidents" style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-left:auto;">CLEAR ×</a>
+  {% endif %}
+</form>
+
+<!-- ── Incidents table ───────────────────────────────────────────────────── -->
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-title">▣ All Incident Reports</div>
+    {% if open_count > 0 %}
+    <div style="
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--red); letter-spacing: 0.15em; text-transform: uppercase;
+    ">● {{ open_count }} OPEN</div>
+    {% else %}
+    <div style="
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--green); letter-spacing: 0.15em; text-transform: uppercase;
+    ">✓ ALL CLEAR</div>
+    {% endif %}
+  </div>
+
+  {% if incidents %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Incident ID</th>
+        <th>Linked Alert</th>
+        <th>Summary</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inc in incidents %}
+      <tr style="
+        cursor: pointer;
+        {% if inc.status == 'OPEN' %}
+          border-left: 3px solid var(--red);
+        {% elif inc.status == 'IN_REVIEW' %}
+          border-left: 3px solid var(--amber);
+        {% else %}
+          border-left: 3px solid var(--green);
+        {% endif %}
+      " onclick="location.href='/incidents/{{ inc.id }}'">
+        <td class="mono text-dim">{{ loop.index }}</td>
+
+        <td>
+          <span style="
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--blue); background: var(--blue-muted);
+            border: 1px solid #93c5fd;
+            padding: 2px 8px; border-radius: 2px; letter-spacing: 0.08em;
+          ">INC-{{ '%04d' % inc.id }}</span>
+        </td>
+
+        <td>
+          <span style="
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--text-secondary);
+          ">ALERT-{{ '%04d' % inc.alert_id }}</span>
+        </td>
+
+        <td style="
+          max-width: 360px; font-size: 12px;
+          color: var(--text-secondary); line-height: 1.55;
+        ">
+          {{ inc.summary or '—' }}
+        </td>
+
+        <td>
+          {% set st = inc.status | upper %}
+          {% if st == 'OPEN' %}
+            <span class="badge badge-open">OPEN</span>
+          {% elif st == 'IN_REVIEW' %}
+            <span class="badge badge-review">IN REVIEW</span>
+          {% elif st == 'CLOSED' %}
+            <span class="badge badge-closed">CLOSED</span>
+          {% else %}
+            <span class="badge badge-default">{{ st }}</span>
+          {% endif %}
+        </td>
+
+        <td class="mono">
+          {{ inc.created_at.strftime('%Y-%m-%d %H:%M') if inc.created_at else '—' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set base_query = "status=" ~ status_filter %}
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">
+    {% if status_filter %}NO {{ status_filter }} INCIDENTS
+    {% else %}✓ NO INCIDENTS ON RECORD{% endif %}<br>
+    <span style="font-size:9px;margin-top:8px;display:block;">
+      RAISE INCIDENTS FROM THE ALERT DETAIL PAGE
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Workflow guide ─────────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 24px;
+">
+  <div style="
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--text-dim); letter-spacing: 0.2em;
+    text-transform: uppercase; margin-bottom: 14px;
+  ">Incident Lifecycle</div>
+
+  <div style="display: flex; align-items: center; gap: 0; flex-wrap: wrap;">
+    {% for step, color, label in [
+      ('OPEN',       'red',   'Alert triggered, no action taken yet'),
+      ('IN_REVIEW',  'amber', 'Security team actively investigating'),
+      ('CLOSED',     'green', 'Resolved, documented, and archived'),
+    ] %}
+    <div style="
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px;
+      {% if not loop.last %}border-right: 1px solid var(--border);{% endif %}
+    ">
+      <span class="badge badge-{{ step | lower | replace('_', '') | replace('review','review') }}">
+        {% if step == 'IN_REVIEW' %}IN REVIEW{% else %}{{ step }}{% endif %}
+      </span>
+      <span style="font-size: 12px; color: var(--text-secondary);">{{ label }}</span>
+    </div>
+    {% if not loop.last %}
+    <span style="
+      font-family: var(--font-mono); font-size: 14px;
+      color: var(--text-dim); padding: 0 4px;
+    ">→</span>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">⚙ Detection Settings</div>
+  <div class="section-count">ADMIN ONLY — CHANGES TAKE EFFECT IMMEDIATELY</div>
+</div>
+
+{% if saved is defined %}
+<div style="
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+  color: var(--green); background: var(--green-muted);
+  border: 1px solid var(--green-dim); border-radius: var(--radius);
+  padding: 10px 18px; margin-bottom: 20px;
+">◈ SETTINGS SAVED SUCCESSFULLY</div>
+{% endif %}
+
+<form method="POST" action="/settings/save">
+
+  <!-- ── Rule-based detection thresholds ──────────────────────────────── -->
+  <div class="table-wrap" style="margin-bottom: 24px;">
+    <div class="table-header">
+      <div class="table-title">◬ Rule-Based Detection Thresholds</div>
+    </div>
+    <div style="padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+      <!-- Repeated DELETE limit -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          REPEATED DELETE LIMIT
+        </div>
+        <input type="number" name="failed_access_limit" min="1" max="50"
+          value="{{ settings.failed_access_limit.value if 'failed_access_limit' in settings else '3' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          How many DELETE actions by one user before an alert fires
+        </div>
+      </div>
+
+      <!-- Repeated DELETE window -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          REPEATED DELETE WINDOW (MIN)
+        </div>
+        <input type="number" name="failed_access_window_min" min="1" max="1440"
+          value="{{ settings.failed_access_window_min.value if 'failed_access_window_min' in settings else '60' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Look-back window in minutes
+        </div>
+      </div>
+
+      <!-- Off-hours start -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          OFF-HOURS START (24-H)
+        </div>
+        <input type="number" name="off_hours_start" min="0" max="23"
+          value="{{ settings.off_hours_start.value if 'off_hours_start' in settings else '22' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Hour at which off-hours period begins (e.g. 22 = 10 PM)
+        </div>
+      </div>
+
+      <!-- Off-hours end -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          OFF-HOURS END (24-H)
+        </div>
+        <input type="number" name="off_hours_end" min="0" max="23"
+          value="{{ settings.off_hours_end.value if 'off_hours_end' in settings else '6' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Hour at which off-hours period ends (e.g. 6 = 6 AM)
+        </div>
+      </div>
+
+      <!-- High-volume limit -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          HIGH-VOLUME THRESHOLD
+        </div>
+        <input type="number" name="high_volume_limit" min="1" max="500"
+          value="{{ settings.high_volume_limit.value if 'high_volume_limit' in settings else '10' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Record views by one user in the window before alert fires
+        </div>
+      </div>
+
+      <!-- High-volume window -->
+      <div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          HIGH-VOLUME WINDOW (MIN)
+        </div>
+        <input type="number" name="high_volume_window_min" min="1" max="1440"
+          value="{{ settings.high_volume_window_min.value if 'high_volume_window_min' in settings else '60' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Look-back window in minutes
+        </div>
+      </div>
+
+      <!-- Suspicious IP prefixes — full width -->
+      <div style="grid-column: span 2;">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+          SUSPICIOUS IP PREFIXES (COMMA-SEPARATED)
+        </div>
+        <input type="text" name="suspicious_ip_prefixes"
+          value="{{ settings.suspicious_ip_prefixes.value if 'suspicious_ip_prefixes' in settings else '45.33,185.220,103.21,91.108' }}"
+          style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+        />
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          Any access log whose IP starts with one of these prefixes will trigger a SUSPICIOUS_IP alert
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ML anomaly detection ──────────────────────────────────────────── -->
+  <div class="table-wrap" style="margin-bottom: 24px;">
+    <div class="table-header">
+      <div class="table-title">◈ ML Anomaly Detection</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.12em;">
+        ISOLATION FOREST (SKLEARN)
+      </div>
+    </div>
+    <div style="padding: 24px;">
+
+      <!-- Model status card -->
+      <div style="
+        background: var(--bg-surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 18px 24px; margin-bottom: 20px;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+      ">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:4px;">STATUS</div>
+          {% if ml.trained %}
+            <span class="badge badge-closed">TRAINED</span>
+          {% else %}
+            <span class="badge badge-open">NOT TRAINED</span>
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:4px;">LAST TRAINED</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary);">
+            {{ ml.trained_at.strftime('%Y-%m-%d %H:%M UTC') if ml.trained_at else '—' }}
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:4px;">TRAINING SAMPLES</div>
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--blue);">
+            {{ ml.sample_count or 0 }}
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:4px;">MODEL TYPE</div>
+          <div style="font-size:12px;color:var(--text-secondary);">
+            {{ ml.model_type or '—' }}
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+        <!-- Enabled toggle -->
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+            ML DETECTION ENABLED
+          </div>
+          <select name="ml_detection_enabled" style="
+            width:100%; background:var(--bg-surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:10px 14px;
+            font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+            outline:none; cursor:pointer; transition:border-color var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green)'"
+          onblur="this.style.borderColor='var(--border)'"
+          >
+            {% set enabled_val = settings.ml_detection_enabled.value if 'ml_detection_enabled' in settings else 'true' %}
+            <option value="true"  {% if enabled_val == 'true'  %}selected{% endif %}>Enabled</option>
+            <option value="false" {% if enabled_val == 'false' %}selected{% endif %}>Disabled</option>
+          </select>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+            Toggle the ML anomaly detection layer on or off
+          </div>
+        </div>
+
+        <!-- Contamination rate -->
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.18em;margin-bottom:6px;">
+            CONTAMINATION RATE (0.01 – 0.20)
+          </div>
+          <input type="number" name="ml_contamination" min="0.01" max="0.20" step="0.01"
+            value="{{ settings.ml_contamination.value if 'ml_contamination' in settings else '0.05' }}"
+            style="
+              width:100%; background:var(--bg-surface); border:1px solid var(--border);
+              border-radius:var(--radius); padding:10px 14px;
+              font-family:var(--font-mono); font-size:13px; color:var(--text-primary);
+              outline:none; transition:border-color var(--transition);
+            "
+            onfocus="this.style.borderColor='var(--green)'"
+            onblur="this.style.borderColor='var(--border)'"
+          />
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+            Expected fraction of anomalies — lower = fewer alerts, higher = more sensitive
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Save button ────────────────────────────────────────────────────── -->
+  <div style="display:flex; align-items:center; gap:16px;">
+    <button type="submit" style="
+      font-family: var(--font-display); font-size: 13px;
+      font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
+      background: var(--green-muted); color: var(--green);
+      border: 1px solid var(--green-dim); border-radius: var(--radius);
+      padding: 11px 28px; cursor: pointer;
+      transition: all var(--transition);
+    "
+    onmouseover="this.style.background='var(--green)';this.style.color='#080b0f'"
+    onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+      ◈ Save Settings
+    </button>
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);">
+      Changes apply to the next detection run
+    </span>
+  </div>
+
+</form>
+
+<!-- ── Manual retrain ─────────────────────────────────────────────────────── -->
+<div style="
+  margin-top: 28px;
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+">
+  <div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">
+      MANUAL RETRAIN
+    </div>
+    <div style="font-size:13px;color:var(--text-secondary);">
+      Force an immediate model retrain on the last 90 days of access logs.
+      The model also retrains automatically every day at 02:00 UTC.
+    </div>
+  </div>
+  <form method="POST" action="/settings/retrain" style="flex-shrink:0;">
+    <button type="submit" style="
+      font-family: var(--font-display); font-size: 12px;
+      font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      background: var(--blue-muted); color: var(--blue);
+      border: 1px solid #93c5fd; border-radius: var(--radius);
+      padding: 10px 22px; cursor: pointer;
+      transition: all var(--transition);
+    "
+    onmouseover="this.style.background='var(--blue)';this.style.color='#080b0f'"
+    onmouseout="this.style.background='var(--blue-muted)';this.style.color='var(--blue)'">
+      ▶ Retrain Now
+    </button>
+  </form>
+</div>
+
+{% endblock %}

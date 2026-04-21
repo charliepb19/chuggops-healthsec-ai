@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">◉ User Management</div>
+  <div class="section-count">{{ users | length }} USER{% if users | length != 1 %}S{% endif %} REGISTERED</div>
+</div>
+
+{% if error %}
+<div style="
+  font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+  color:var(--red); background:var(--red-muted);
+  border:1px solid var(--red-dim); border-radius:var(--radius);
+  padding:8px 16px; margin-bottom:20px;
+">⚠ {{ error }}</div>
+{% endif %}
+
+{% if added %}
+<div style="
+  font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+  color:var(--green); background:var(--green-muted);
+  border:1px solid var(--green-dim); border-radius:var(--radius);
+  padding:8px 16px; margin-bottom:20px;
+">◈ USER ADDED SUCCESSFULLY</div>
+{% endif %}
+
+<!-- ── Stats strip ───────────────────────────────────────────────────────── -->
+{% set active_count = users | selectattr('active') | list | length %}
+{% set admin_count  = users | selectattr('role', 'equalto', 'ADMIN') | list | length %}
+<div style="
+  display:flex; gap:0;
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; margin-bottom:20px;
+">
+  {% for label, val, color in [
+    ('Total Users',   users | length,  'green'),
+    ('Active',        active_count,    'blue'),
+    ('Administrators',admin_count,     'amber'),
+  ] %}
+  <div style="
+    flex:1; padding:16px 24px;
+    {% if not loop.last %}border-right:1px solid var(--border);{% endif %}
+  ">
+    <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;">{{ label }}</div>
+    <div style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--{{ color }});">{{ val }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="display:grid; grid-template-columns:1fr auto; gap:20px; align-items:start;">
+
+  <!-- ── User table ────────────────────────────────────────────────────── -->
+  <div class="table-wrap" style="margin-bottom:0;">
+    <div class="table-header">
+      <div class="table-title">◉ All Users</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Last Login</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="font-family:var(--font-mono);font-size:13px;color:var(--text-primary);">
+            {{ u.username }}
+            {% if u.username == request.session.get('user') %}
+            <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-dim);margin-left:6px;">(you)</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.role == 'ADMIN' %}
+              <span class="badge badge-closed">ADMIN</span>
+            {% elif u.role == 'ANALYST' %}
+              <span class="badge badge-low">ANALYST</span>
+            {% else %}
+              <span class="badge badge-default">READ ONLY</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.active %}
+              <span class="badge badge-closed">ACTIVE</span>
+            {% else %}
+              <span class="badge badge-open">INACTIVE</span>
+            {% endif %}
+          </td>
+          <td class="mono text-dim">
+            {{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}
+          </td>
+          <td class="mono text-dim">
+            {{ u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else 'Never' }}
+          </td>
+          <td>
+            {% if u.username != request.session.get('user') %}
+            <form method="POST" action="/users/{{ u.id }}/toggle" style="margin:0;">
+              <button type="submit" style="
+                font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em;
+                padding:4px 12px; border-radius:4px; cursor:pointer;
+                transition:all var(--transition);
+                {% if u.active %}
+                  background:var(--red-muted); color:var(--red); border:1px solid var(--red-dim);
+                {% else %}
+                  background:var(--green-muted); color:var(--green); border:1px solid var(--green-dim);
+                {% endif %}
+              ">
+                {% if u.active %}DEACTIVATE{% else %}ACTIVATE{% endif %}
+              </button>
+            </form>
+            {% else %}
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Add user form ─────────────────────────────────────────────────── -->
+  <div style="
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden; min-width:260px;
+    border-left:3px solid var(--green);
+  ">
+    <div style="
+      background:var(--bg-surface); padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      font-family:var(--font-display); font-size:13px; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+    ">+ Add User</div>
+
+    <form method="POST" action="/users/add">
+      <div style="padding:20px; display:grid; gap:16px;">
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">USERNAME</div>
+          <input type="text" name="username" required placeholder="staff.login" style="
+            width:100%; background:var(--bg-surface);
+            border:1px solid var(--border); border-radius:var(--radius);
+            padding:10px 12px; font-family:var(--font-mono);
+            font-size:12px; color:var(--text-primary); outline:none;
+            transition:border-color var(--transition), box-shadow var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green-dim)';this.style.boxShadow='0 0 0 3px var(--green-muted)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'" />
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">PASSWORD</div>
+          <input type="password" name="password" required placeholder="••••••••" style="
+            width:100%; background:var(--bg-surface);
+            border:1px solid var(--border); border-radius:var(--radius);
+            padding:10px 12px; font-family:var(--font-mono);
+            font-size:12px; color:var(--text-primary); outline:none;
+            letter-spacing:0.1em;
+            transition:border-color var(--transition), box-shadow var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green-dim)';this.style.boxShadow='0 0 0 3px var(--green-muted)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'" />
+        </div>
+
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">ROLE</div>
+          <div style="display:grid; gap:6px;">
+            {% for val, label, desc in [
+              ('ADMIN',     'Admin',     'Full access + user management'),
+              ('ANALYST',   'Analyst',   'View and manage incidents'),
+              ('READ_ONLY', 'Read Only', 'View only, no edits'),
+            ] %}
+            <label style="
+              display:flex; align-items:center; gap:10px;
+              padding:8px 12px; cursor:pointer;
+              background:var(--bg-surface); border:1px solid var(--border);
+              border-radius:var(--radius); transition:all var(--transition);
+            ">
+              <input type="radio" name="role" value="{{ val }}"
+                {% if val == 'ANALYST' %}checked{% endif %}
+                style="accent-color:var(--green);" />
+              <div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-primary);">{{ label }}</div>
+                <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);">{{ desc }}</div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" style="
+          width:100%; padding:11px;
+          background:var(--green-muted); color:var(--green);
+          border:1px solid var(--green-dim); border-radius:var(--radius);
+          font-family:var(--font-display); font-size:13px; font-weight:700;
+          cursor:pointer; letter-spacing:0.06em;
+          transition:all var(--transition);
+        "
+        onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+        onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+          + Create User
+        </button>
+
+      </div>
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}

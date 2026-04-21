@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Page header ───────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <div class="section-title">◬ Security Alerts</div>
+  <div class="section-count">
+    {{ alerts | length }} ALERT{% if alerts | length != 1 %}S{% endif %} ON RECORD
+  </div>
+</div>
+
+<!-- ── Severity summary cards ────────────────────────────────────────────── -->
+{% set critical_count = alerts | selectattr('severity', 'equalto', 'CRITICAL') | list | length %}
+{% set high_count     = alerts | selectattr('severity', 'equalto', 'HIGH')     | list | length %}
+{% set medium_count   = alerts | selectattr('severity', 'equalto', 'MEDIUM')   | list | length %}
+{% set low_count      = alerts | selectattr('severity', 'equalto', 'LOW')      | list | length %}
+
+<div class="cards-grid" style="margin-bottom: 24px;">
+  <div class="card card-red">
+    <div class="card-label">Critical</div>
+    <div class="card-value">{{ critical_count }}</div>
+    <div class="card-sub">IMMEDIATE ACTION</div>
+  </div>
+  <div class="card" style="border-top: 2px solid #fb923c;">
+    <div class="card-label">High</div>
+    <div class="card-value" style="color: #fb923c;">{{ high_count }}</div>
+    <div class="card-sub">URGENT REVIEW</div>
+  </div>
+  <div class="card card-amber">
+    <div class="card-label">Medium</div>
+    <div class="card-value">{{ medium_count }}</div>
+    <div class="card-sub">MONITOR CLOSELY</div>
+  </div>
+  <div class="card card-blue">
+    <div class="card-label">Low</div>
+    <div class="card-value">{{ low_count }}</div>
+    <div class="card-sub">INFORMATIONAL</div>
+  </div>
+</div>
+
+<!-- ── Filter bar ────────────────────────────────────────────────────────── -->
+<form method="GET" action="/alerts" style="
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 20px; margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+">
+  <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;">SEVERITY</div>
+  {% for sev, cls in [('', 'default'), ('CRITICAL', 'critical'), ('HIGH', 'high'), ('MEDIUM', 'medium'), ('LOW', 'low')] %}
+  <label style="cursor:pointer;">
+    <input type="radio" name="severity" value="{{ sev }}"
+      {% if severity == sev %}checked{% endif %}
+      style="display:none;" onchange="this.form.submit()" />
+    <span class="badge badge-{{ cls }}" style="
+      cursor:pointer; opacity:{% if severity == sev %}1{% else %}0.45{% endif %};
+      transition:opacity 150ms ease;
+    ">{{ sev or 'ALL' }}</span>
+  </label>
+  {% endfor %}
+  {% if severity %}
+  <a href="/alerts" style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-left:auto;">CLEAR ×</a>
+  {% endif %}
+</form>
+
+<!-- ── Alerts table ──────────────────────────────────────────────────────── -->
+<div class="table-wrap">
+  <div class="table-header">
+    <div class="table-title">◬ All Security Alerts</div>
+    {% if critical_count > 0 %}
+    <div style="
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--red); letter-spacing: 0.15em; text-transform: uppercase;
+      animation: pulse 1.5s ease-in-out infinite;
+    ">
+      ● {{ critical_count }} CRITICAL UNRESOLVED
+    </div>
+    {% endif %}
+  </div>
+
+  {% if alerts %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Severity</th>
+        <th>Alert Type</th>
+        <th>Description</th>
+        <th>Raised At</th>
+          <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in alerts %}
+      <tr style="
+        cursor: pointer;
+        {% if alert.severity == 'CRITICAL' %}
+          border-left: 3px solid var(--red);
+        {% elif alert.severity == 'HIGH' %}
+          border-left: 3px solid #fb923c;
+        {% elif alert.severity == 'MEDIUM' %}
+          border-left: 3px solid var(--amber);
+        {% else %}
+          border-left: 3px solid var(--blue);
+        {% endif %}
+      " onclick="location.href='/alerts/{{ alert.id }}'"
+         onmouseover="this.style.background='var(--bg-hover)'"
+         onmouseout="this.style.background=''"
+      >
+        <td class="mono text-dim">{{ loop.index }}</td>
+
+        <td>
+          {% set sev = alert.severity | upper %}
+          <span class="badge badge-{{ sev | lower }}">{{ sev }}</span>
+        </td>
+
+        <td>
+          <span style="
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--text-primary); letter-spacing: 0.06em;
+          ">{{ alert.alert_type }}</span>
+        </td>
+
+        <td style="
+          max-width: 380px; font-size: 12px;
+          color: var(--text-secondary); line-height: 1.5;
+        ">
+          {{ alert.description or '—' }}
+        </td>
+
+        <td class="mono">
+          {{ alert.created_at.strftime('%Y-%m-%d %H:%M') if alert.created_at else '—' }}
+        </td>
+        <td style="text-align:right;">
+          <span style="
+            font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;
+            color:var(--text-dim);
+          ">ANALYSE →</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set base_query = "severity=" ~ severity %}
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">
+    {% if severity %}NO {{ severity }} ALERTS ON RECORD
+    {% else %}✓ NO SECURITY ALERTS ON RECORD{% endif %}<br>
+    <span style="font-size:9px;margin-top:8px;display:block;">
+      RUN THE DETECTION ENGINE FROM THE DASHBOARD TO GENERATE ALERTS
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Alert legend ──────────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 24px;
+">
+  <div style="
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--text-dim); letter-spacing: 0.2em;
+    text-transform: uppercase; margin-bottom: 14px;
+  ">Alert Type Reference</div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px;">
+    {% for type, desc in [
+      ('BRUTE_FORCE',           'Multiple rapid failed login attempts'),
+      ('UNAUTHORIZED_ACCESS',   'Access outside of assigned role scope'),
+      ('ANOMALOUS_DOWNLOAD',    'Bulk record download in short period'),
+      ('OFF_HOURS_ACCESS',      'Record access during non-business hours'),
+      ('PRIVILEGE_ESCALATION',  'Self-granted elevated permissions'),
+      ('SUSPICIOUS_IP',         'Access from threat-intelligence flagged IP'),
+      ('DATA_EXFILTRATION',     'Large outbound transfer to external host'),
+      ('REPEATED_RECORD_VIEW',  'Same record accessed many times by one user'),
+      ('HIGH_VOLUME_ACCESS',    'High volume of record views in short window'),
+    ] %}
+    <div style="
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    ">
+      <span style="
+        font-family: var(--font-mono); font-size: 9px;
+        color: var(--green); background: var(--green-muted);
+        border: 1px solid var(--green-dim);
+        padding: 2px 6px; border-radius: 2px;
+        flex-shrink: 0; letter-spacing: 0.05em; margin-top: 1px;
+      ">{{ type }}</span>
+      <span style="font-size: 12px; color: var(--text-secondary);">{{ desc }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

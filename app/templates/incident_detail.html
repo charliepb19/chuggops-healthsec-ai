@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Back + header ─────────────────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+  <a href="/incidents" style="
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.15em;
+    color:var(--text-dim); border:1px solid var(--border);
+    border-radius:var(--radius); padding:6px 14px;
+    transition:all var(--transition);
+  "
+  onmouseover="this.style.color='var(--text-primary)';this.style.borderColor='var(--border-bright)'"
+  onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">
+    ← INCIDENTS
+  </a>
+  <div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;">
+      {{ "INC-%04d" % incident.id }} //
+      {% if incident.status == 'OPEN' %}
+        <span style="color:var(--red);">OPEN</span>
+      {% elif incident.status == 'IN_REVIEW' %}
+        <span style="color:var(--amber);">IN REVIEW</span>
+      {% else %}
+        <span style="color:var(--green);">CLOSED</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if updated is defined %}
+<div style="
+  font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+  color:var(--green); background:var(--green-muted);
+  border:1px solid var(--green-dim); border-radius:var(--radius);
+  padding:8px 16px; margin-bottom:20px;
+">◈ INCIDENT UPDATED SUCCESSFULLY</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+
+  <!-- ── Left: edit form ───────────────────────────────────────────────── -->
+  <div style="
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden;
+    {% if incident.status == 'OPEN' %}border-left:3px solid var(--red);
+    {% elif incident.status == 'IN_REVIEW' %}border-left:3px solid var(--amber);
+    {% else %}border-left:3px solid var(--green);{% endif %}
+  ">
+    <div style="
+      background:var(--bg-surface); padding:14px 20px;
+      border-bottom:1px solid var(--border);
+      font-family:var(--font-display); font-size:13px; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+    ">▣ Manage Incident</div>
+
+    <form method="POST" action="/incidents/{{ incident.id }}/update">
+      <div style="padding:20px; display:grid; gap:20px;">
+
+        <!-- Status selector -->
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:10px;">STATUS</div>
+          <div style="display:flex; gap:8px;">
+            {% for val, label, color in [('OPEN','Open','red'), ('IN_REVIEW','In Review','amber'), ('CLOSED','Closed','green')] %}
+            <label style="flex:1; cursor:pointer;">
+              <input type="radio" name="status" value="{{ val }}"
+                {% if incident.status == val %}checked{% endif %}
+                style="display:none;"
+                onchange="updateStatusStyles()"
+                id="status_{{ val }}"
+              />
+              <div id="label_{{ val }}" style="
+                text-align:center; padding:9px 4px;
+                font-family:var(--font-mono); font-size:9px;
+                letter-spacing:0.12em; text-transform:uppercase;
+                border-radius:var(--radius); border:1px solid;
+                cursor:pointer; transition:all var(--transition);
+                {% if incident.status == val %}
+                  {% if color == 'red' %}background:var(--red-muted);color:var(--red);border-color:var(--red-dim);
+                  {% elif color == 'amber' %}background:var(--amber-muted);color:var(--amber);border-color:#fcd34d;
+                  {% else %}background:var(--green-muted);color:var(--green);border-color:var(--green-dim);{% endif %}
+                {% else %}
+                  background:var(--bg-surface);color:var(--text-dim);border-color:var(--border);
+                {% endif %}
+              " onclick="document.getElementById('status_{{ val }}').checked=true; updateStatusStyles();">
+                {{ label }}
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Summary textarea -->
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">SUMMARY</div>
+          <textarea name="summary" rows="5" style="
+            width:100%; background:var(--bg-surface);
+            border:1px solid var(--border); border-radius:var(--radius);
+            padding:12px 14px; font-family:var(--font-body);
+            font-size:13px; color:var(--text-primary);
+            line-height:1.6; resize:vertical; outline:none;
+            transition:border-color var(--transition), box-shadow var(--transition);
+          "
+          onfocus="this.style.borderColor='var(--green-dim)';this.style.boxShadow='0 0 0 3px var(--green-muted)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
+          >{{ incident.summary }}</textarea>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" style="
+          width:100%; padding:12px;
+          background:var(--green-muted); color:var(--green);
+          border:1px solid var(--green-dim); border-radius:var(--radius);
+          font-family:var(--font-display); font-size:14px; font-weight:700;
+          cursor:pointer; letter-spacing:0.06em;
+          transition:all var(--transition);
+        "
+        onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+        onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+          Save Changes
+        </button>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Right: linked alert + metadata ───────────────────────────────── -->
+  <div style="display:grid; gap:16px;">
+
+    <!-- Metadata card -->
+    <div style="
+      background:var(--bg-panel); border:1px solid var(--border);
+      border-radius:var(--radius); overflow:hidden;
+    ">
+      <div style="
+        background:var(--bg-surface); padding:14px 20px;
+        border-bottom:1px solid var(--border);
+        font-family:var(--font-display); font-size:13px; font-weight:700;
+        letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+      ">◉ Details</div>
+      <div style="padding:20px; display:grid; gap:14px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">INCIDENT ID</div>
+          <div style="font-family:var(--font-mono);font-size:14px;color:var(--blue);">{{ "INC-%04d" % incident.id }}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">CREATED</div>
+          <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);">
+            {{ incident.created_at.strftime('%Y-%m-%d %H:%M UTC') if incident.created_at else '—' }}
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">LINKED ALERT</div>
+          <a href="/alerts/{{ incident.alert_id }}" style="
+            font-family:var(--font-mono); font-size:13px;
+            color:var(--green); text-decoration:underline; text-underline-offset:3px;
+          ">ALERT-{{ '%04d' % incident.alert_id }} →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linked alert summary -->
+    {% if incident.alert %}
+    <div style="
+      background:var(--bg-panel); border:1px solid var(--border);
+      border-radius:var(--radius); overflow:hidden;
+      {% if incident.alert.severity == 'CRITICAL' %}border-left:3px solid var(--red);
+      {% elif incident.alert.severity == 'HIGH' %}border-left:3px solid #fb923c;
+      {% elif incident.alert.severity == 'MEDIUM' %}border-left:3px solid var(--amber);
+      {% else %}border-left:3px solid var(--blue);{% endif %}
+    ">
+      <div style="
+        background:var(--bg-surface); padding:14px 20px;
+        border-bottom:1px solid var(--border);
+        display:flex; align-items:center; justify-content:space-between;
+      ">
+        <div style="
+          font-family:var(--font-display); font-size:13px; font-weight:700;
+          letter-spacing:0.1em; text-transform:uppercase; color:var(--text-secondary);
+        ">◬ Triggering Alert</div>
+        {% set sev = incident.alert.severity | upper %}
+        <span class="badge badge-{{ sev | lower }}">{{ sev }}</span>
+      </div>
+      <div style="padding:16px 20px;">
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-primary);letter-spacing:0.06em;margin-bottom:8px;">
+          {{ incident.alert.alert_type }}
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          {{ incident.alert.description or '—' }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+  const statusStyles = {
+    OPEN:      { bg:'var(--red-muted)',    color:'var(--red)',   border:'var(--red-dim)' },
+    IN_REVIEW: { bg:'var(--amber-muted)',  color:'var(--amber)', border:'#fcd34d' },
+    CLOSED:    { bg:'var(--green-muted)',  color:'var(--green)', border:'var(--green-dim)' },
+  };
+  const dimStyle = { bg:'var(--bg-surface)', color:'var(--text-dim)', border:'var(--border)' };
+
+  function updateStatusStyles() {
+    ['OPEN','IN_REVIEW','CLOSED'].forEach(val => {
+      const radio = document.getElementById('status_' + val);
+      const label = document.getElementById('label_' + val);
+      const s = radio.checked ? statusStyles[val] : dimStyle;
+      label.style.background   = s.bg;
+      label.style.color        = s.color;
+      label.style.borderColor  = s.border;
+    });
+  }
+</script>
+
+{% endblock %}

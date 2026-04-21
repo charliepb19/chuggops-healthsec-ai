@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ── Back + header ─────────────────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+  <a href="/alerts" style="
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--text-dim); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 6px 14px;
+    transition: all var(--transition);
+  "
+  onmouseover="this.style.color='var(--text-primary)';this.style.borderColor='var(--border-bright)'"
+  onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">
+    ← ALERTS
+  </a>
+  <div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;">
+      ALERT #{{ alert.id }} // {{ alert.alert_type }}
+    </div>
+  </div>
+</div>
+
+<!-- ── Alert info card ───────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 20px; overflow: hidden;
+  {% if alert.severity == 'CRITICAL' %}border-left: 3px solid var(--red);
+  {% elif alert.severity == 'HIGH' %}border-left: 3px solid #fb923c;
+  {% elif alert.severity == 'MEDIUM' %}border-left: 3px solid var(--amber);
+  {% else %}border-left: 3px solid var(--blue);{% endif %}
+">
+  <div style="
+    background: var(--bg-surface); padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  ">
+    <div style="
+      font-family: var(--font-display); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-secondary);
+    ">◬ Alert Details</div>
+    {% set sev = alert.severity | upper %}
+    <span class="badge badge-{{ sev | lower }}">{{ sev }}</span>
+  </div>
+
+  <div style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">TYPE</div>
+      <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-primary);letter-spacing:0.06em;">{{ alert.alert_type }}</div>
+    </div>
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">RAISED AT</div>
+      <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);">
+        {{ alert.created_at.strftime('%Y-%m-%d %H:%M UTC') if alert.created_at else '—' }}
+      </div>
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:4px;">DESCRIPTION</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">{{ alert.description or '—' }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI Analysis panel ─────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+">
+  <div style="
+    background: var(--bg-surface); padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  ">
+    <div style="
+      font-family: var(--font-display); font-size: 13px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-secondary);
+    ">◈ AI Analysis</div>
+    <span style="
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em;
+      padding: 3px 8px; border-radius: 2px; text-transform: uppercase;
+      {% if analysis.source == 'openai' %}
+        background: var(--blue-muted); color: var(--blue); border: 1px solid #93c5fd;
+      {% else %}
+        background: var(--bg-surface); color: var(--text-dim); border: 1px solid var(--border);
+      {% endif %}
+    ">
+      {{ 'AI-POWERED' if analysis.source == 'openai' else 'RULE-BASED' }}
+    </span>
+  </div>
+
+  <div style="padding: 24px; display: grid; gap: 24px;">
+
+    <!-- Explanation -->
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">EXPLANATION</div>
+      <div style="
+        font-size: 14px; color: var(--text-primary); line-height: 1.8;
+        border-left: 2px solid var(--border-bright); padding-left: 16px;
+      ">{{ analysis.explanation }}</div>
+    </div>
+
+    <!-- Risk level -->
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">ASSESSED RISK LEVEL</div>
+      {% set risk = analysis.risk_level | upper %}
+      <span class="badge badge-{{ risk | lower }}">{{ risk }}</span>
+    </div>
+
+    <!-- Recommended actions -->
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:12px;">RECOMMENDED ACTIONS</div>
+      <div style="display: grid; gap: 8px;">
+        {% for action in analysis.actions %}
+        <div style="
+          display: flex; gap: 12px; align-items: flex-start;
+          background: var(--bg-surface); border: 1px solid var(--border);
+          border-radius: var(--radius); padding: 12px 16px;
+        ">
+          <span style="
+            font-family: var(--font-mono); font-size: 10px;
+            color: var(--green); flex-shrink: 0; margin-top: 1px;
+          ">{{ "%02d" % loop.index }}</span>
+          <span style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">{{ action }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Incident section ───────────────────────────────────────────────────── -->
+<div style="
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-top: 20px;
+  {% if alert.incident_report %}border-left: 3px solid var(--green);
+  {% else %}border-left: 3px solid var(--amber);{% endif %}
+">
+  <div style="
+    background: var(--bg-surface); padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-secondary);
+  ">◉ Incident Report</div>
+
+  {% if alert.incident_report %}
+  <!-- Incident already exists — show link -->
+  <div style="padding: 20px; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:6px;">LINKED INCIDENT</div>
+      <div style="font-family:var(--font-mono);font-size:14px;color:var(--blue);">
+        INC-{{ '%04d' % alert.incident_report.id }}
+      </div>
+      {% set st = alert.incident_report.status | upper %}
+      <div style="margin-top:8px;">
+        {% if st == 'OPEN' %}<span class="badge badge-open">OPEN</span>
+        {% elif st == 'IN_REVIEW' %}<span class="badge badge-review">IN REVIEW</span>
+        {% else %}<span class="badge badge-closed">CLOSED</span>{% endif %}
+      </div>
+    </div>
+    <a href="/incidents/{{ alert.incident_report.id }}" style="
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em;
+      color: var(--green); border: 1px solid var(--green-dim);
+      background: var(--green-muted); border-radius: var(--radius);
+      padding: 10px 20px; text-decoration: none;
+      transition: all var(--transition);
+    "
+    onmouseover="this.style.background='var(--green)';this.style.color='#07061a'"
+    onmouseout="this.style.background='var(--green-muted)';this.style.color='var(--green)'">
+      VIEW INCIDENT →
+    </a>
+  </div>
+
+  {% else %}
+  <!-- No incident yet — show raise form -->
+  <div style="padding: 20px;">
+    <div style="
+      font-family: var(--font-mono); font-size: 10px; color: var(--amber);
+      letter-spacing: 0.12em; margin-bottom: 16px;
+    ">⚠ NO INCIDENT RAISED FOR THIS ALERT</div>
+
+    <form method="POST" action="/alerts/{{ alert.id }}/raise-incident">
+      <div style="margin-bottom:14px;">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;">INCIDENT SUMMARY</div>
+        <textarea name="summary" rows="4" required style="
+          width: 100%; background: var(--bg-surface);
+          border: 1px solid var(--border); border-radius: var(--radius);
+          padding: 12px 14px; font-family: var(--font-body);
+          font-size: 13px; color: var(--text-primary);
+          line-height: 1.6; resize: vertical; outline: none;
+          transition: border-color var(--transition), box-shadow var(--transition);
+        "
+        placeholder="Describe the security incident and initial findings..."
+        onfocus="this.style.borderColor='var(--green-dim)';this.style.boxShadow='0 0 0 3px var(--green-muted)'"
+        onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"></textarea>
+      </div>
+      <button type="submit" style="
+        padding: 11px 28px;
+        background: var(--amber-muted); color: var(--amber);
+        border: 1px solid #fcd34d; border-radius: var(--radius);
+        font-family: var(--font-display); font-size: 13px; font-weight: 700;
+        cursor: pointer; letter-spacing: 0.06em;
+        transition: all var(--transition);
+      "
+      onmouseover="this.style.background='var(--amber)';this.style.color='#07061a'"
+      onmouseout="this.style.background='var(--amber-muted)';this.style.color='var(--amber)'">
+        ▲ Raise Incident
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
